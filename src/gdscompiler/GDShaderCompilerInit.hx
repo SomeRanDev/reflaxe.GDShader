@@ -25,6 +25,7 @@ class GDShaderCompilerInit {
 		ReflectCompiler.AddCompiler(new GDShaderCompiler(), {
 			expressionPreprocessors: [
 				RemoveTemporaryVariables(AllOneUseVariables),
+				RemoveTemporaryVariables(OnlyAvoidTemporaryFieldAccess),
 				SanitizeEverythingIsExpression,
 				PreventRepeatVariables,
 				RemoveSingleExpressionBlocks,
