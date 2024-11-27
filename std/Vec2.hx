@@ -12,6 +12,10 @@ extern abstract Vec2(IVec2) {
 	@:overload(function(v: Float): Void {})
 	public function new(x: Float, y: Float);
 
+	public extern inline function lerp(other: Vec2, weight: Float) {
+		return GDShader.mix(abstract, other, weight);
+	}
+
 	@:op(A + B) @:commutative public static inline function addF(me: Vec2, other: Float): Vec2
 		return untyped __gdshader__("{0} + {1}", me, other);
 	@:op(A + B) public static inline function addV2(me: Vec2, other: Vec2): Vec2

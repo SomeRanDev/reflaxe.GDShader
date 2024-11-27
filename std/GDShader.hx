@@ -13,3 +13,5 @@ extern overload function vec4(x: Float, y: Float, z: Float, w: Float): Vec4;
 
 extern function texture(sampler: Sampler2D, uv: Vec2): Vec4;
 extern function textureLod(sampler: Sampler2D, uv: Vec2, lod: Float): Vec4;
+
+extern function mix<T>(first: T, second: T, weight: Float): T;

@@ -20,4 +20,8 @@ extern abstract Vec4(IVec4) {
 	@:overload(function(): Void {})
 	@:overload(function(v: Float): Void {})
 	public function new(x: Float, y: Float, z: Float, w: Float);
+
+	public extern inline function lerp(other: Vec4, weight: Float) {
+		return GDShader.mix(abstract, other, weight);
+	}
 }
