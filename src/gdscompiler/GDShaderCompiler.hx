@@ -219,7 +219,7 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 			funcContent.add(")");
 			if(f.expr != null) {
 				funcContent.add(" ");
-				funcContent.add(compileExpression(f.expr));
+				funcContent.add(compileExpression(f.expr.ensureBlock()));
 			}
 			funcContent.add("\n");
 		}
