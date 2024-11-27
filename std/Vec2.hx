@@ -1,15 +1,19 @@
 package;
 
+@:avoid_temporaries
+@:gdshaderType("vec2")
 extern class IVec2 {
 	public var x: Float;
 	public var y: Float;
 }
 
 @:forward
+@:avoid_temporaries
 @:gdshaderType("vec2")
 extern abstract Vec2(IVec2) {
 	@:overload(function(): Void {})
 	@:overload(function(v: Float): Void {})
+	@:native("vec2")
 	public function new(x: Float, y: Float);
 
 	public extern inline function lerp(other: Vec2, weight: Float) {
