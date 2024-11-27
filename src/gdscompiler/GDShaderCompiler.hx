@@ -165,6 +165,11 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 			if(field.hasMeta(":color")) {
 				attributes.push("source_color");
 			}
+			if(field.hasMeta(":range")) {
+				// TODO: Add param checker function in Reflaxe to ensure 2-3 Float params.
+				final params = field.meta.extractParamsFromFirstMeta(":range");
+				attributes.push("hint_range(" + params.join(", ") + ")");
+			}
 
 			if(attributes.length > 0) {
 				varsContent.add(": ");
