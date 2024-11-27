@@ -1,0 +1,7 @@
+-cp src
+
+-D gdshader-output=out
+
+--no-opt
+
+test

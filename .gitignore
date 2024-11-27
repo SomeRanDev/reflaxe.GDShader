@@ -1,0 +1,9 @@
+test/gdscript/out
+test/project.godot
+_Build/
+
+godot/
+
+extension_api.json
+gdscript.zip
+Submit.bat

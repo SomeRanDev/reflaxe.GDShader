@@ -1,0 +1,3 @@
+-D gdshader
+-D retain-untyped-meta
+--macro gdscompiler.GDShaderCompilerInit.Start()
