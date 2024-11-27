@@ -585,11 +585,12 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 	}
 
 	function fieldAccessToGDShader(e: TypedExpr, fa: FieldAccess): String {
+		var isStatic = false;
 		final nameMeta: NameAndMeta = switch(fa) {
 			case FInstance(_, _, classFieldRef): classFieldRef.get();
 			case FStatic(_, classFieldRef): {
-				// There is no static access in GDShader, just return the function/var name.
-				return classFieldRef.get().name;
+				isStatic = true;
+				classFieldRef.get();
 			}
 			case FAnon(classFieldRef): classFieldRef.get();
 			case FClosure(_, classFieldRef): classFieldRef.get();
@@ -601,6 +602,11 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 			nameMeta.getNameOrNative();
 		} else {
 			final name = compileVarName(nameMeta.getNameOrNativeName());
+
+			// There is no static access in GDShader, just return the function/var name.
+			if(isStatic) {
+				return name;
+			}
 
 			// Avoid using `this.`, as class variables should be used directly.
 			if(e.isThisExpr()) {
