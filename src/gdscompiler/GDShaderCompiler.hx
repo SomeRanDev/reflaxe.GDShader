@@ -445,7 +445,7 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 				if(normalWhile) {
 					result.addMulti("while(", gdCond, ") {\n");
 					result.add(toIndentedScope(blockExpr));
-					result.add("}\n");
+					result.add("\n}");
 				} else {
 					result.add("while(true) {\n");
 					result.add(toIndentedScope(blockExpr));
