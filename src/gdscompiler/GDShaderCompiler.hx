@@ -231,11 +231,11 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 			funcContent.add("(");
 			var doComma = false;
 			for(arg in f.args) {
-				if(doComma) funcContent.add(",");
-				else doComma = false;
+				if(doComma) funcContent.add(", ");
+				else doComma = true;
 				funcContent.add(compileType(arg.type, field.pos));
 				funcContent.add(" ");
-				funcContent.add(compileVarName(arg.name));
+				funcContent.add(compileVarName(arg.getName()));
 			}
 			funcContent.add(")");
 			if(f.expr != null) {
