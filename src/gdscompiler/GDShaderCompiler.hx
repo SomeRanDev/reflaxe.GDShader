@@ -109,19 +109,34 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 				case _: Context.error("@:shader(path: String, ...(key = value)) has incorrect parameters!", shader.pos);
 			}
 
+			var startIndex = 1;
+			final renderModes = if(params.length > 1) {
+				switch(params[1]) {
+					case { expr: ECall(macro RenderMode, identifiers) }: {
+						startIndex = 2;
+						identifiers.map(ident -> switch(ident) {
+							case { expr: EConst(CIdent(ident)) }: ident;
+							case _: null;
+						});
+					}
+					case _: null;
+				}
+			} else null;
+
 			context.reset();
-			for(i in 1...params.length) {
+			for(i in startIndex...params.length) {
 				context.addAssignment(params[i]);
 			}
 
-			compileClassImpl2(shaderType, path, classType, varFields, funcFields);
+			compileClassImpl2(shaderType, renderModes, path, classType, varFields, funcFields);
 		}
 
 		return null;
 	}
 
 	function compileClassImpl2(
-		shaderType: Null<String>, path: String, classType: ClassType, varFields: Array<ClassVarData>, funcFields: Array<ClassFuncData>
+		shaderType: Null<String>, renderModes: Null<Array<String>>, path: String,
+		classType: ClassType, varFields: Array<ClassVarData>, funcFields: Array<ClassFuncData>
 	): Void {
 		// reset class compile state
 		includes = [];
@@ -241,6 +256,10 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 
 			if(shaderType != null) {
 				fileContent.addMulti("shader_type ", shaderType, ";\n\n");
+			}
+
+			if(renderModes != null) {
+				fileContent.addMulti("render_mode ", renderModes.join(", "), ";\n\n");
 			}
 
 			if(includes.length > 0) {
