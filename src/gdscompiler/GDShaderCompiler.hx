@@ -7,18 +7,12 @@ import reflaxe.helpers.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
 
-import haxe.display.Display.MetadataTarget;
-
 import reflaxe.data.ClassVarData;
 import reflaxe.data.ClassFuncData;
 import reflaxe.data.EnumOptionData;
 
 import reflaxe.DirectToStringCompiler;
-import reflaxe.helpers.OperatorHelper;
 import reflaxe.preprocessors.implementations.everything_is_expr.EverythingIsExprSanitizer;
-
-import gdscompiler.config.Define;
-import gdscompiler.config.Meta;
 
 using StringTools;
 
@@ -40,7 +34,10 @@ using gdscompiler.helpers.TypedExprHelper;
 
 class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 	var includes: Array<String> = [];
+	var functions: Array<ClassFuncData> = [];
+	var generatedFunctions: Map<String, Bool> = [];
 	var context = new GDShaderContext();
+	var nameOverrides: Map<Int, String> = [];
 
 	public function new() {
 		super();
@@ -140,6 +137,8 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 	): Void {
 		// reset class compile state
 		includes = [];
+		functions = [];
+		generatedFunctions = [];
 
 		// instance vars
 		final varsContent = new StringBuf();
@@ -247,9 +246,58 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 			funcContent.add("\n");
 		}
 
+		final extraFuncContent = new StringBuf();
+		final extraReservedNames = functions.length > 0 ? varFields.map(v -> v.field.name) : [];
+		while(functions.length > 0) {
+			final f = functions.splice(0, 1)[0];
+			final field = f.field;
+
+			if(field.isExtern || f.classType.isExtern || field.hasMeta(":extern") || field.hasMeta(":gds_extern")) {
+				continue;
+			}
+
+			if(f.expr == null) {
+				continue;
+			}
+
+			// Filter out false `@:constif`s, then reapply preprocessors.
+			final f = f.clone();
+			f.applyPreprocessors(this, [
+				SanitizeEverythingIsExpression({}),
+				PreventRepeatVariables({ extraReservedNames: extraReservedNames }),
+				RemoveTemporaryVariables(AllTempVariables),
+				Custom(context),
+				RemoveSingleExpressionBlocks,
+				RemoveConstantBoolIfs,
+				RemoveUnnecessaryBlocks,
+				RemoveReassignedVariableDeclarations,
+				RemoveLocalVariableAliases,
+			]);
+
+			extraFuncContent.add(compileType(f.ret, field.pos));
+			extraFuncContent.add(" ");
+			extraFuncContent.add(compileVarName(field.name, null, field));
+			extraFuncContent.add("(");
+			var doComma = false;
+			for(arg in f.args) {
+				if(doComma) extraFuncContent.add(", ");
+				else doComma = true;
+				extraFuncContent.add(compileType(arg.type, field.pos));
+				extraFuncContent.add(" ");
+				extraFuncContent.add(compileVarName(arg.getName()));
+			}
+			extraFuncContent.add(")");
+			if(f.expr != null) {
+				extraFuncContent.add(" ");
+				extraFuncContent.add(compileExpression(f.expr.ensureBlock()));
+			}
+			extraFuncContent.add("\n");
+		}
+
 		// Get list of compiled sections
 		final combinedContent = [];
 		combinedContent.pushIfNotEmpty(varsContent.toString().trim());
+		combinedContent.pushIfNotEmpty(extraFuncContent.toString().trim());
 		combinedContent.pushIfNotEmpty(funcContent.toString().trim());
 
 		// Generate file
@@ -590,9 +638,25 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 				final meta = declaration.meta;
 				final data = meta != null ? extractStringFromMeta(meta, ":include") : null;
 				if(data != null) {
-					includes.push(data.code);
+					final code = data.code.trim();
+					if(!includes.contains(code)) {
+						includes.push(code);
+					}
 				}
 			}
+		}
+
+		switch(calledExpr) {
+			case { expr: TField({ expr: TTypeExpr(m) }, FStatic(_.get() => cls, _.get() => field)) }: {
+				if(getCurrentModule() != m) {
+					final data = field.findFuncData(cls, true);
+					if(!generatedFunctions.exists(data.id)) {
+						generatedFunctions.set(data.id, true);
+						functions.push(data);
+					}
+				}
+			}
+			case _:
 		}
 
 		final result = new StringBuf();
