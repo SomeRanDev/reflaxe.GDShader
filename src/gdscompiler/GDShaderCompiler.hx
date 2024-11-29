@@ -65,6 +65,7 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 			case TAbstract(_.get() => { name: "Int", pack: [] }, []): "int";
 			case TAbstract(_.get() => { name: "Float", pack: [] }, []): "float";
 			case TAbstract(_.get() => { name: "Bool", pack: [] }, []): "bool";
+			case TAbstract(_.get() => { name: "UInt", pack: [] }, []): "uint";
 			case _: null;
 		}
 		if(prim != null) {
