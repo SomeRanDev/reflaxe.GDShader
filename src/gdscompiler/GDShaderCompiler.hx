@@ -194,7 +194,7 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 			}
 
 			final expr = v.findDefaultExpr();
-			if(expr != null) {
+			if(expr != null && !expr.isNoInitCall()) {
 				varsContent.add(" = ");
 				varsContent.add(compileExpression(expr));
 			}
