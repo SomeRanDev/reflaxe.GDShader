@@ -24,6 +24,12 @@ extern abstract Vec2(IVec2) {
 		return untyped __gdshader__("{0} + {1}", me, other);
 	@:op(A + B) public static inline function addV2(me: Vec2, other: Vec2): Vec2
 		return untyped __gdshader__("{0} + {1}", me, other);
+	@:op(A - B) public static inline function subV2(me: Vec2, other: Vec2): Vec2
+		return untyped __gdshader__("{0} - {1}", me, other);
 	@:op(A * B) @:commutative public static inline function mul(me: Vec2, other: Float): Vec2
 		return untyped __gdshader__("{0} * {1}", me, other);
+	@:op(A * B) public static inline function mulV(me: Vec2, other: Vec2): Vec2
+		return untyped __gdshader__("{0} * {1}", me, other);
+	@:op(A / B) public static inline function divF(me: Vec2, other: Float): Vec2
+		return untyped __gdshader__("{0} / {1}", me, other);
 }
