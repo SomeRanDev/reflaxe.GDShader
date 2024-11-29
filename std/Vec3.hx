@@ -1,6 +1,7 @@
 package;
 
-@:avoid_temporaries
+@:copyValue
+@:avoidTemporaries
 @:gdshaderType("vec3")
 extern class IVec3 {
 	public var x: Float;
@@ -9,7 +10,8 @@ extern class IVec3 {
 }
 
 @:forward
-@:avoid_temporaries
+@:copyValue
+@:avoidTemporaries
 @:gdshaderType("vec3")
 extern abstract Vec3(IVec3) {
 	@:overload(function(): Void {})
