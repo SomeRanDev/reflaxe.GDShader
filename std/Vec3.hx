@@ -27,4 +27,6 @@ extern abstract Vec3(IVec3) {
 		return untyped __gdshader__("({0} * {1})", me, other);
 	@:op(A * B) public static inline function mulV(me: Vec3, other: Vec3): Vec3
 		return untyped __gdshader__("({0} * {1})", me, other);
+	@:op(A / B) public static inline function divF(me: Vec3, other: Float): Vec3
+		return untyped __gdshader__("({0} / {1})", me, other);
 }

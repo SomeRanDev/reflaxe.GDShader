@@ -30,4 +30,7 @@ extern abstract Vec4(IVec4) {
 	public extern inline function lerp(other: Vec4, weight: Float) {
 		return GDShader.mix(abstract, other, weight);
 	}
+
+	@:op(A * B) public static inline function mulV(me: Vec4, other: Vec4): Vec4
+		return untyped __gdshader__("({0} * {1})", me, other);
 }
