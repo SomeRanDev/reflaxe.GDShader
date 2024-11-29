@@ -26,8 +26,8 @@ class GDShaderCompilerInit {
 			expressionPreprocessors: [
 				RemoveTemporaryVariables(AllOneUseVariables),
 				RemoveTemporaryVariables(OnlyAvoidTemporaryFieldAccess),
-				SanitizeEverythingIsExpression,
-				PreventRepeatVariables,
+				SanitizeEverythingIsExpression({}),
+				PreventRepeatVariables({}),
 				RemoveSingleExpressionBlocks,
 				RemoveConstantBoolIfs,
 				RemoveUnnecessaryBlocks,
