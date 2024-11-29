@@ -39,6 +39,13 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 	var context = new GDShaderContext();
 	var nameOverrides: Map<Int, String> = [];
 
+	static final NO_PARAMETER_ATTRIBUTES = [
+		":color" => "source_color",
+		":screenTexture" => "hint_screen_texture",
+		":repeatDisable" => "repeat_disable",
+		":filterNearest" => "filter_nearest"
+	];
+
 	public function new() {
 		super();
 	}
@@ -172,13 +179,18 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 			} else {
 				varsContent.add("uniform ");
 			}
+			if(field.hasMeta(":flat")) {
+				varsContent.add("flat ");
+			}
 			varsContent.add(compileType(field.type, field.pos));
 			varsContent.add(" ");
 			varsContent.add(compileVarName(field.name, null, field));
 
 			final attributes = [];
-			if(field.hasMeta(":color")) {
-				attributes.push("source_color");
+			for(haxeMeta => gdshaderAttribute in NO_PARAMETER_ATTRIBUTES) {
+				if(field.hasMeta(haxeMeta)) {
+					attributes.push(gdshaderAttribute);
+				}
 			}
 			if(field.hasMeta(":range")) {
 				// TODO: Add param checker function in Reflaxe to ensure 2-3 Float params.
