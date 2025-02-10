@@ -14,7 +14,17 @@ extern class IVec4 {
 	public var b: Float;
 	public var a: Float;
 
+	public var wz: Vec2;
+
+	public var xy: Vec2;
+	public var xyz: Vec3;
+	public var xyw: Vec3;
+	public var yzx: Vec3;
+
 	public var rgb: Vec3;
+
+	public var xxx: Vec3;
+	public var www: Vec3;
 }
 
 @:forward
@@ -31,6 +41,14 @@ extern abstract Vec4(IVec4) {
 		return GDShader.mix(abstract, other, weight);
 	}
 
+	@:op(A + B) public static inline function addV(me: Vec4, other: Vec4): Vec4
+		return untyped __gdshader__("({0} + {1})", me, other);
+	@:op(A * B) @:commutative public static inline function mulF(me: Vec4, other: Float): Vec4
+		return untyped __gdshader__("({0} * {1})", me, other);
 	@:op(A * B) public static inline function mulV(me: Vec4, other: Vec4): Vec4
 		return untyped __gdshader__("({0} * {1})", me, other);
+	@:op(A / B) public static inline function divF(me: Vec4, other: Float): Vec4
+		return untyped __gdshader__("({0} / {1})", me, other);
+	@:op(A / B) public static inline function divFR(other: Float, me: Vec4): Vec4
+		return untyped __gdshader__("({0} / {1})", other, me);
 }

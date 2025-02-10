@@ -6,6 +6,9 @@ package;
 extern class IVec2 {
 	public var x: Float;
 	public var y: Float;
+
+	public var xy: Vec2;
+	public var yx: Vec2;
 }
 
 @:forward
@@ -26,6 +29,10 @@ extern abstract Vec2(IVec2) {
 		return untyped __gdshader__("({0} + {1})", me, other);
 	@:op(A + B) public static inline function addV2(me: Vec2, other: Vec2): Vec2
 		return untyped __gdshader__("({0} + {1})", me, other);
+	@:op(A - B) public static inline function subF(me: Vec2, other: Float): Vec2
+		return untyped __gdshader__("({0} - {1})", me, other);
+	@:op(A - B) public static inline function subFR(other: Float, me: Vec2): Vec2
+		return untyped __gdshader__("({0} - {1})", other, me);
 	@:op(A - B) public static inline function subV2(me: Vec2, other: Vec2): Vec2
 		return untyped __gdshader__("({0} - {1})", me, other);
 	@:op(A * B) @:commutative public static inline function mul(me: Vec2, other: Float): Vec2
@@ -33,5 +40,9 @@ extern abstract Vec2(IVec2) {
 	@:op(A * B) public static inline function mulV(me: Vec2, other: Vec2): Vec2
 		return untyped __gdshader__("({0} * {1})", me, other);
 	@:op(A / B) public static inline function divF(me: Vec2, other: Float): Vec2
+		return untyped __gdshader__("({0} / {1})", me, other);
+	@:op(A / B) public static inline function divFR(other: Float, me: Vec2): Vec2
+		return untyped __gdshader__("({0} / {1})", other, me);
+	@:op(A / B) public static inline function divV(me: Vec2, other: Vec2): Vec2
 		return untyped __gdshader__("({0} / {1})", me, other);
 }
