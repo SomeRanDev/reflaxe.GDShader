@@ -8,6 +8,10 @@ import reflaxe.BaseCompiler;
 import reflaxe.data.ClassFuncData;
 import reflaxe.preprocessors.BasePreprocessor;
 
+using reflaxe.helpers.TypedExprHelper;
+using reflaxe.helpers.TypeHelper;
+
+using gdscompiler.helpers.TypedExprHelper;
 
 @:using(gdscompiler.GDShaderContext.GDShaderContextValueHelper)
 enum GDShaderContextValue {
@@ -63,10 +67,20 @@ class GDShaderContext extends BasePreprocessor {
 		switch(expr.expr) {
 			case TMeta({ name: ":constif", params: params, pos: pos }, e1): {
 				if(params != null && params.length == 1) {
+					if(e1.isConstExprCall()) {
+						if(e1.t.isBool()) {
+							return e1.copy(TConst(TBool(evalBool(params[0]))));
+						} else if(e1.t.isInt()) {
+							return e1.copy(TConst(TInt(evalInt(params[0]))));
+						} else {
+							Context.error("constexpr() only supported on Bool or Int expressions at the moment.", e1.pos);
+						}
+					}
+
 					if(!evalBool(params[0])) {
 						return { expr: TBlock([]), pos: pos, t: expr.t };
 					} else {
-						return haxe.macro.TypedExprTools.map(e1, filterConstIfs);
+						return filterConstIfs(e1);
 					}
 				} else {
 					Context.error("@:constif must have one parameter.", pos);
@@ -99,7 +113,16 @@ class GDShaderContext extends BasePreprocessor {
 	public function evalBool(expression: Expr): Bool {
 		return switch(eval(expression)) {
 			case Boolean(v): v;
+			case Undefined: false;
+			case Identifier(_): false; // Unprocessed identifier means it contains no value, treat falsey.
 			case _: Context.error("Does not evaluate to boolean.", expression.pos);
+		}
+	}
+
+	public function evalInt(expression: Expr): Int {
+		return switch(eval(expression)) {
+			case Integer(v): v;
+			case _: Context.error("Does not evaluate to integer.", expression.pos);
 		}
 	}
 

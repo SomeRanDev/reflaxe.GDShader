@@ -14,6 +14,8 @@ import reflaxe.data.EnumOptionData;
 import reflaxe.DirectToStringCompiler;
 import reflaxe.preprocessors.implementations.everything_is_expr.EverythingIsExprSanitizer;
 
+import gdscompiler.config.Meta;
+
 using StringTools;
 
 using reflaxe.helpers.ArrayHelper;
@@ -37,13 +39,17 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 	var functions: Array<ClassFuncData> = [];
 	var generatedFunctions: Map<String, Bool> = [];
 	var context = new GDShaderContext();
-	var nameOverrides: Map<Int, String> = [];
 
 	static final NO_PARAMETER_ATTRIBUTES = [
 		":color" => "source_color",
 		":screenTexture" => "hint_screen_texture",
+		":depthTexture" => "hint_depth_texture",
+		":normalRoughnessTexture" => "hint_normal_roughness_texture",
+		":repeatEnable" => "repeat_enable",
 		":repeatDisable" => "repeat_disable",
-		":filterNearest" => "filter_nearest"
+		":filterNearest" => "filter_nearest",
+		":filterLinear" => "filter_linear",
+		":filterNearestMipmap" => "filter_nearest_mipmap",
 	];
 
 	public function new() {
@@ -105,7 +111,18 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 		// 	case _: false;
 		// }
 
-		for(shader in classType.meta.maybeExtract(":shader")) {
+		final defaultRenderModesMeta = classType.meta.maybeExtract(Meta.DefaultRenderModes);
+		final defaultRenderModes = if(defaultRenderModesMeta.length > 0) {
+			final params = defaultRenderModesMeta[0].params;
+			if(params != null) {
+				params.map(ident -> switch(ident) {
+					case { expr: EConst(CIdent(ident)) }: ident;
+					case _: null;
+				});
+			} else null;
+		} else null;
+
+		for(shader in classType.meta.maybeExtract(Meta.Shader)) {
 			final params = shader.params ?? [];
 
 			final path = switch(params[0]) {
@@ -123,9 +140,9 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 							case _: null;
 						});
 					}
-					case _: null;
+					case _: defaultRenderModes;
 				}
-			} else null;
+			} else defaultRenderModes;
 
 			context.reset();
 			for(i in startIndex...params.length) {
@@ -172,19 +189,44 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 				continue;
 			}
 
+			final sizedArrayData = switch(field.type) {
+				case TAbstract(_.get() => { name: "SizedArray", pack: [] }, [innerType, TInst(_.get() => { kind: KExpr(expr) }, _)]): {
+					final size = switch(expr.expr) {
+						case EConst(CInt(intString, _)): Std.parseInt(intString);
+						case _: null;
+					}
+					if(size == null) {
+						Context.error("SizedArray second argument must be Int.", expr.pos);
+						null;
+					} else {
+						{ innerType: innerType, size: size };
+					}
+				}
+				case _: null;
+			}
+
 			if(field.hasMeta(":varying")) {
 				varsContent.add("varying ");
 			} else if(field.hasMeta(":global")) {
 				varsContent.add("global uniform ");
+			} else if(field.hasMeta(":instance")) {
+				varsContent.add("instance uniform ");
+			} else if(field.hasMeta(":const")) {
+				varsContent.add("const ");
 			} else {
 				varsContent.add("uniform ");
 			}
 			if(field.hasMeta(":flat")) {
 				varsContent.add("flat ");
 			}
-			varsContent.add(compileType(field.type, field.pos));
+			final t = if(sizedArrayData != null) { sizedArrayData.innerType; } else { field.type; }
+			varsContent.add(compileType(t, field.pos));
 			varsContent.add(" ");
 			varsContent.add(compileVarName(field.name, null, field));
+
+			if(sizedArrayData != null) {
+				varsContent.addMulti("[", Std.string(sizedArrayData.size), "]");
+			}
 
 			final attributes = [];
 			for(haxeMeta => gdshaderAttribute in NO_PARAMETER_ATTRIBUTES) {
@@ -227,6 +269,22 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 				continue;
 			}
 
+			var shouldCompile = true;
+			for(condition in field.meta.maybeExtract(":constif")) {
+				final cond = switch(condition.params) {
+					case [expression]: context.evalBool(expression);
+					case _: Context.error("@:constif must contain a single expression parameter.", condition.pos);
+				}
+				if(!cond) {
+					shouldCompile = false;
+					break;
+				}
+			}
+
+			if(!shouldCompile) {
+				continue;
+			}
+
 			// Filter out false `@:constif`s, then reapply preprocessors.
 			final f = f.clone();
 			f.applyPreprocessors(this, [
@@ -236,6 +294,7 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 				RemoveUnnecessaryBlocks,
 				RemoveReassignedVariableDeclarations,
 				RemoveLocalVariableAliases,
+				RemoveTemporaryVariables(AllOneUseVariables),
 			]);
 
 			funcContent.add(compileType(f.ret, field.pos));
@@ -258,7 +317,7 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 			funcContent.add("\n");
 		}
 
-		final extraFuncContent = new StringBuf();
+		final extraFunctions = [];
 		final extraReservedNames = functions.length > 0 ? varFields.map(v -> v.field.name) : [];
 		while(functions.length > 0) {
 			final f = functions.splice(0, 1)[0];
@@ -275,9 +334,10 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 			// Filter out false `@:constif`s, then reapply preprocessors.
 			final f = f.clone();
 			f.applyPreprocessors(this, [
+				RemoveTemporaryVariables(AllOneUseVariables),
+				RemoveTemporaryVariables(OnlyAvoidTemporaryFieldAccess),
 				SanitizeEverythingIsExpression({}),
 				PreventRepeatVariables({ extraReservedNames: extraReservedNames }),
-				RemoveTemporaryVariables(AllTempVariables),
 				Custom(context),
 				RemoveSingleExpressionBlocks,
 				RemoveConstantBoolIfs,
@@ -286,6 +346,7 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 				RemoveLocalVariableAliases,
 			]);
 
+			final extraFuncContent = new StringBuf();
 			extraFuncContent.add(compileType(f.ret, field.pos));
 			extraFuncContent.add(" ");
 			extraFuncContent.add(compileVarName(field.name, null, field));
@@ -304,12 +365,14 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 				extraFuncContent.add(compileExpression(f.expr.ensureBlock()));
 			}
 			extraFuncContent.add("\n");
+
+			extraFunctions.unshift(extraFuncContent.toString());
 		}
 
 		// Get list of compiled sections
 		final combinedContent = [];
 		combinedContent.pushIfNotEmpty(varsContent.toString().trim());
-		combinedContent.pushIfNotEmpty(extraFuncContent.toString().trim());
+		combinedContent.pushIfNotEmpty(extraFunctions.join("\n").trim());
 		combinedContent.pushIfNotEmpty(funcContent.toString().trim());
 
 		// Generate file
@@ -393,6 +456,9 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 				result.add("]");
 			}
 			case TCall(e, el): {
+				if(expr.isConstExprCall()) {
+					Context.error("constexpr() must have a @:constif metadata to determine its value.", expr.pos);
+				}
 				result.add(callToGDShader(e, el, expr));
 			}
 			case TNew(classTypeRef, params, el): {
@@ -522,38 +588,30 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 				}
 			}
 			case TMeta(m, expr): {
-				var shouldCompile = true;
-				var printMeta = true;
-				// if(m.name == ":constif") {
-				// 	if(m.params != null && m.params.length == 1) {
-				// 		if(!context.evalBool(m.params[0])) {
-				// 			shouldCompile = false;
-				// 		} else {
-				// 			printMeta = false; // Do not print as @:constif is "consumed".
-				// 		}
-				// 	} else {
-				// 		Context.error("@:constif must contain a single expression parameter.", m.pos);
-				// 	}
-				// }
-
-				if(shouldCompile) {
-					switch(m) {
-						case { name: ":const" } if(m.params == null || m.params.length == 0): {
-							switch(expr.unwrapMeta().expr) {
-								case TVar(_, _): {
-									result.addMulti("const ", compileExpressionOrError(expr));
-								}
-								case _: {
-									Context.error("@:const can only be used on variables.", m.pos);
-								}
+				switch(m) {
+					case { name: ":const" } if(m.params == null || m.params.length == 0): {
+						switch(expr.unwrapMeta().expr) {
+							case TVar(_, _): {
+								result.addMulti("const ", compileExpressionOrError(expr));
+							}
+							case _: {
+								Context.error("@:const can only be used on variables.", m.pos);
 							}
 						}
-						case _: {
-							if(printMeta) {
-								result.addMulti("/* @", m.name, " */ ");
+					}
+					case { name: ":mergeBlock" }: {
+						switch(expr.unwrapMeta().expr) {
+							case TBlock(expressions): {
+								result.add(compileExpressionsIntoLines(expressions));
 							}
-							result.add(compileExpressionOrError(expr));
+							case _: {
+								result.add(compileExpressionOrError(expr));
+							}
 						}
+					}
+					case _: {
+						result.addMulti("/* @", m.name, " */ ");
+						result.add(compileExpressionOrError(expr));
 					}
 				}
 			}
@@ -662,7 +720,7 @@ class GDShaderCompiler extends reflaxe.DirectToStringCompiler {
 			case { expr: TField({ expr: TTypeExpr(m) }, FStatic(_.get() => cls, _.get() => field)) }: {
 				if(getCurrentModule() != m) {
 					final data = field.findFuncData(cls, true);
-					if(!generatedFunctions.exists(data.id)) {
+					if(data != null && !generatedFunctions.exists(data.id)) {
 						generatedFunctions.set(data.id, true);
 						functions.push(data);
 					}
