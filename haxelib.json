@@ -17,7 +17,7 @@
 		"extension"
 	],
 	"dependencies": {
-		"reflaxe": "git:https://github.com/SomeRanDev/reflaxe"
+		"reflaxe": "4.0.0-beta"
 	},
 	"classPath": "src/",
 	"releasenote": "Fixed issue with std class paths not properly shadowing when installing from haxelib.",
