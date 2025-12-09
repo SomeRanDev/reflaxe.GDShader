@@ -21,6 +21,8 @@ class GDShaderCompilerInit {
 			return;
 		}
 
+		Compiler.addGlobalMetadata("StdTypes.Int", "@:build(gdshader.Init.initInt())");
+
 		// Add our compiler to Reflaxe
 		ReflectCompiler.AddCompiler(new GDShaderCompiler(), {
 			expressionPreprocessors: [

@@ -6,7 +6,7 @@
 	"license": "MIT",
 	"tags": [
 		"godot",
-		"gdscript",
+		"gdshader",
 		"macro",
 		"compiler",
 		"target",
@@ -25,6 +25,6 @@
 	"reflaxe": {
 		"name": "GDShader",
 		"abbv": "gdshader",
-		"stdPaths": ["std", "std/gdshader/_std", "gdshader-api"]
+		"stdPaths": ["std", "std/gdshader/_std", "api"]
 	}
 }

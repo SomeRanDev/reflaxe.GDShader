@@ -2,8 +2,7 @@ test/gdscript/out
 test/project.godot
 _Build/
 
-godot/
+gdshader-api/
 
-extension_api.json
-gdscript.zip
-Submit.bat
+shader_api.json
+shader_api_v4_6.json
