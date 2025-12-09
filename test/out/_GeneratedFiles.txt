@@ -1,6 +1,0 @@
-version // 1
-3//0
-2d/FileSelect/FileSelectStickyNote_Hovered.gdshader
-2d/FileSelect/FileSelectStickyNote.gdshader
-2d/FileSelect/FileSelectNewGame_Hovered.gdshader
-2d/FileSelect/FileSelectNewGame.gdshader
