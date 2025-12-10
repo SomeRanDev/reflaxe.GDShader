@@ -1,9 +1,17 @@
 {
-	"name": "gdshader",
-	"version": "1.0.0",
+	"classPath": "src/",
 	"description": "Compile Haxe to Godot's shader language.",
-	"url": "https://github.com/SomeRanDev/reflaxe.GDShader",
+	"version": "1.0.0",
+	"dependencies": {
+		"reflaxe": "4.0.0-beta"
+	},
 	"license": "MIT",
+	"name": "gdshader",
+	"releasenote": "Initial release",
+	"url": "https://github.com/SomeRanDev/reflaxe.GDShader",
+	"contributors": [
+		"SomeRanDev"
+	],
 	"tags": [
 		"godot",
 		"gdshader",
@@ -15,16 +23,5 @@
 		"externs",
 		"metadata",
 		"extension"
-	],
-	"dependencies": {
-		"reflaxe": "4.0.0-beta"
-	},
-	"classPath": "src/",
-	"releasenote": "Initial release",
-	"contributors": ["SomeRanDev"],
-	"reflaxe": {
-		"name": "GDShader",
-		"abbv": "gdshader",
-		"stdPaths": ["std", "std/gdshader/_std", "api"]
-	}
+	]
 }
