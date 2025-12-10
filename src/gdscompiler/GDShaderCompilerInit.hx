@@ -3,15 +3,8 @@ package gdscompiler;
 #if (macro || gdshader_runtime)
 
 import haxe.macro.Compiler;
-import haxe.macro.Expr;
-import haxe.macro.Type;
-
-import haxe.display.Display.MetadataTarget;
 
 import reflaxe.ReflectCompiler;
-import reflaxe.input.ExpressionModifier;
-import reflaxe.preprocessors.ExpressionPreprocessor;
-//import reflaxe.preprocessors.implementations.TemporaryVarRemover.TemporaryVarRemoverMode;
 
 using reflaxe.helpers.ExprHelper;
 
@@ -20,8 +13,6 @@ class GDShaderCompilerInit {
 		if(isRunScript()) {
 			return;
 		}
-
-		Compiler.addGlobalMetadata("StdTypes.Int", "@:build(gdshader.Init.initInt())");
 
 		// Add our compiler to Reflaxe
 		ReflectCompiler.AddCompiler(new GDShaderCompiler(), {

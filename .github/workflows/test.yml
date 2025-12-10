@@ -9,7 +9,7 @@ on:
 jobs:
   build_ubuntu:
     runs-on: ubuntu-latest
-    name: Test Runtime & Null Safety
+    name: Run Fecal Tests
     steps:
       - uses: krdlab/setup-haxe@v2
         with:
@@ -24,5 +24,9 @@ jobs:
       - name: Install Reflaxe
         run: haxelib git reflaxe https://github.com/SomeRanDev/reflaxe.git
 
-      - name: Test Dev. Environment
-        run: haxe DevEnv.hxml
+      - name: Install Fecal
+        run: haxelib git fecal https://github.com/SomeRanDev/fecal.git
+
+      - name: Run Tests
+        working-directory: test
+        run: haxe Test.hxml
