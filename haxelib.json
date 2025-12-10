@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"description": "Compile Haxe to Godot's shader language.",
 	"url": "https://github.com/SomeRanDev/reflaxe.GDShader",
-	"license": "MIT",
+	"license": "MPL-2.0",
 	"tags": [
 		"godot",
 		"gdshader",
