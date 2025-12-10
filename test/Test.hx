@@ -1,33 +1,41 @@
 package;
 
-import fecal.data.GenerateBuildCommandData;
-import fecal.data.GenerateExecuteCommandData;
-import fecal.data.GenerateTestArgumentsData;
 import fecal.Fecal;
+import fecal.FecalTest;
+
+class GDShaderTest extends FecalTest {
+	public override function generateHaxeCompilationArguments(
+		outputDirectory: String,
+		testDirectory: String,
+		hxmlFile: { name: String, absolutePath: String },
+		arguments: fecal.data.Arguments,
+	): Array<String> {
+		return [
+			"--no-opt",
+			"-cp ../src",
+			"-cp ../std",
+			"-cp ../std/gdshader/_std",
+			"-cp ../api",
+			"-lib reflaxe",
+			"../extraParams.hxml",
+			"-cp " + testDirectory,
+			"-D message-reporting=pretty",
+			"-D reflaxe.dont_output_metadata_id",
+			"--custom-target gdshader=" + outputDirectory,
+			"\"" + hxmlFile.absolutePath + "\""
+		];
+	}
+}
 
 function main() {
-	switch(Fecal.test(
+	final test = new GDShaderTest(
 		"unit_tests",
 		null,
-		function(data: GenerateTestArgumentsData): Array<String> {
-			return [
-				"--no-opt",
-				"-cp ../src",
-				"-cp ../std",
-				"-cp ../std/gdshader/_std",
-				"-cp ../api",
-				"-lib reflaxe",
-				"../extraParams.hxml",
-				"-cp " + data.testDirectory,
-				"-D message-reporting=pretty",
-				"-D reflaxe.dont_output_metadata_id",
-				"--custom-target gdshader=" + data.outputDirectory,
-				"\"" + data.hxmlFile.absolutePath + "\""
-			];
-		},
-		null,
-		null,
-	)) {
+	);
+
+	final result = Fecal.test(test);
+
+	switch(result) {
 		case Ok(PassedTests(testCount)): {
 			Sys.println('$testCount / $testCount tests passed!');
 		}
