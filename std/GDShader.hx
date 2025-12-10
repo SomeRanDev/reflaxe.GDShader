@@ -15,6 +15,7 @@ package;
 			final a: Int = 12;
 		}
 	}
+	```
 **/
 macro function constexpr<T>(expr: haxe.macro.Expr): haxe.macro.Expr {
 	return macro @:constif($expr) __constexpr__();
